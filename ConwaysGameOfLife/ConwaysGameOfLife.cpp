@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <string>
 #include <thread> //for sleep_for
 #include <chrono> //for chrono::seconds	
 #include <cstdlib> //for system()
@@ -19,9 +20,10 @@ void displayBoard(const std::vector<std::vector<int>>& board)
 		}
 		std::cout << '\n';
 	}
-	std::cout << std::string(39, '-') << '\n'; // prints a line of - that is 20 long
+	std::cout << std::string(((board[0].size() * 2) - 1), '-') << '\n'; // prints a line of - that is 20 long
 	//through testing i found that at least for a 20x20 grid 39 - matches the width
-	//when i begin to expand on this and make it modifiable i will see if N-1 works
+	//when i begin to expand on this and make it modifiable i will see if N*2-1 works
+	//it does, but it needs to be based on the columns (logical now) not the rows
 }
 
 int countLiveNeighbours(const std::vector<std::vector<int>>& board, int row, int col)
@@ -112,51 +114,81 @@ void initializeBoard(std::vector<std::vector<int>>& board)
 	//the glider, or the blinker, i'm gonna pick the glider which is supposed to
 	//glide across the grid and self replicate
 
-	board[1][0] = 1;
-	board[2][1] = 1;
-	board[0][2] = 1;
-	board[1][2] = 1;
-	board[2][2] = 1;
+	board[11][10] = 1;
+	board[12][11] = 1;
+	board[10][12] = 1;
+	board[11][12] = 1;
+	board[12][12] = 1;
 }
 
+//FUNCTIONS ABOVE HERE ARE SIMULATION FUNCTIONALITY
 int main()
 {
 	int rows{ 20 };		//define the number of rows
 	int cols{ 20 };		//define the number of columns
 
-	//create a 2D vector board, initially filled with 0's (all dead)
-	std::vector<std::vector<int>> board(rows, std::vector<int>(cols, 0));
-	initializeBoard(board); //set initial pattern
 
 	//2D vectors is a vector of vectors. The outer vector represents the rows
 	//and the inner vector represents the colums of each row. if this was
 	//a coordinate systen (it kind of is) the outer vector represents the y-axis
 	//and the inner vector represents the x-axis in terms of the grid.
 
-	//set a few cells to alive (1) to get started
-	board[1][2] = 1;
-	board[2][3] = 1;
-	board[3][1] = 1;
 	//we access a column with the syntax (outervector)[row][column](zero indexed)
 
-	//main simulation loop, i want it to repeat for a set amount of iterations
-	//that way i can easily make that an input later
+	//main simulation loop, now nested in a do while loop to accomodate inputs to alter the simulation
 
-	int iterations{ 500 }; //we'll start with 500 iterations
-	while (iterations < iterations + 1) //a flexible condition for later.
-	{
-		//i am very unfamiliar with <cstdlib> but i can use system("CLS); to clear the display
-		//before each redraw, which will be a more pleasant viewing experience.
-		system("CLS");
-		displayBoard(board); //shows the current sate of the board
-		updateBoard(board); //updates to the next generation
+	//variable for exit loop
+	bool running{ true };
 
-		//i'm very unfamilar with the next expression but it allows me to pause
-		//the simulation for an amount of time before the next generation
+	do {
+		std::cout << "Enter amount of rows in grid (height): ";
+		std::cin >> rows;
 
-		//std::this_thread::sleep_for(std::chrono::milliseconds(50)); //pauses for 50 miliseconds
+		std::cout << "Enter amount of cells in grid (width): ";
+		std::cin >> cols;
 
-		++iterations; //increments iterations
-	}
+		//i seem to be hitting limitations in drawing speed by the windows console
+		//this makes sense, and could definitely be prettier in a graphical interface
+		//for now, the larger the grid the more flicker it seems to get as the console
+		//races to draw the grid for each iteration, interestingly
+		//this also puts a unintentional sleep timer on the display (commented out in the loop)
+
+		
+
+		//create a 2D vector board, initially filled with 0's (all dead)
+		std::vector<std::vector<int>> board(rows, std::vector<int>(cols, 0));
+		initializeBoard(board); //set initial pattern
+
+
+		int iterations{ 0 };
+		int iterationsGoal{ 50 };//we'll start with 500 iterations
+
+		std::cout << "Set number of iterations: ";
+		std::cin >> iterationsGoal;
+
+		while (iterations < iterationsGoal+1) //a flexible condition for later.
+		{
+			//i am very unfamiliar with <cstdlib> but i can use system("CLS); to clear the display
+			//before each redraw, which will be a more pleasant viewing experience.
+			system("CLS");
+			displayBoard(board); //shows the current sate of the board
+			updateBoard(board); //updates to the next generation
+			std::cout << "Iteration: " << iterations;
+
+			//i'm very unfamilar with the next expression but it allows me to pause
+			//the simulation for an amount of time before the next generation
+
+			//uncomment for sleep timer between draws
+			//std::this_thread::sleep_for(std::chrono::milliseconds(500)); //pauses for 500 miliseconds
+
+			++iterations; //increments iterations
+		}
+
+		std::cout << '\n';
+		std::cout << "Run again? (0 for no, 1 for yes) ";
+		std::cin >> running;
+
+	} while (running);
+
 	return 0;
 }
